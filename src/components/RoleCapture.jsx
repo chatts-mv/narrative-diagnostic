@@ -43,7 +43,6 @@ export default function RoleCapture({ onComplete }) {
       className={exiting ? "role-capture-exit" : "role-capture-enter"}
       style={{
         textAlign: "center",
-        paddingTop: 80,
         maxWidth: 480,
         margin: "0 auto",
       }}
