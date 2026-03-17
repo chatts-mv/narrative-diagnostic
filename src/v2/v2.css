@@ -1,5 +1,5 @@
 /* ─── V2 Narrative Diagnostic ─────────────────────────────────────────────────
-   Layout: fixed logo header · prompt+textarea at top · chips/CTA pinned bottom
+   Layout: fixed logo header · vertically centred content · chips/CTA pinned bottom
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Fixed logo header ────────────────────────────────────────────────────── */
@@ -16,28 +16,50 @@
 }
 
 /* ── Omnipresent listening wave ───────────────────────────────────────────── */
+/* height / margin / opacity are all controlled inline so the wave collapses
+   to zero space when not yet visible (avoids blank gap before first keystroke) */
 .v2-wave {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 24px;
-  margin: 14px 0;
 }
 
 .v2-wave-bar {
   width: 3px;
   border-radius: 2px;
-  animation-name: v2WaveBar;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-fill-mode: both;
   transition: background 0.5s ease;
 }
 
-@keyframes v2WaveBar {
+/* Idle — slow, gentle breathe */
+@keyframes v2WaveBarIdle {
   0%, 100% { height: 4px; opacity: 0.45; }
-  50%       { height: 18px; opacity: 1; }
+  50%       { height: 14px; opacity: 0.8; }
+}
+
+/* Active (typing / processing) — dampened pulse, clearly present but not loud */
+@keyframes v2WaveBarActive {
+  0%, 100% { height: 4px; opacity: 0.5; }
+  50%       { height: 9px; opacity: 0.9; }
+}
+
+/* ── "Conversation starters" label ───────────────────────────────────────── */
+.v2-chips-label {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Google Sans', sans-serif;
+  color: #9CA3AF;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  animation: v2ChipsLabelEnter 0.4s ease both;
+}
+
+@keyframes v2ChipsLabelEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Bottom docking bar ───────────────────────────────────────────────────── */

@@ -19,19 +19,54 @@ function getLocalSubCopy(len, processing) {
   return "Excellent context. We can generate your report whenever you're ready.";
 }
 
+// ── Centred phase wrapper ─────────────────────────────────────────────────────
+// Consistent double-div centering used for role-capture, narrative, and results.
+// Outer: clears the fixed header (paddingTop) + optional bottom clearance.
+// Inner: flex column centred in the remaining viewport height.
+function PhaseWrapper({ children, bottomClearance = 0, innerPadding = "24px 20px" }) {
+  const headerH = 60;
+  return (
+    <div style={{
+      paddingTop: headerH,
+      paddingBottom: bottomClearance,
+      minHeight: "100vh",
+      boxSizing: "border-box",
+    }}>
+      <div style={{
+        maxWidth: 640,
+        margin: "0 auto",
+        minHeight: `calc(100vh - ${headerH}px - ${bottomClearance}px)`,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: innerPadding,
+        boxSizing: "border-box",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── Omnipresent listening wave ────────────────────────────────────────────────
-// Appears after first keystroke. Breathes gently at idle, livens up when
-// the user types or the AI is processing — giving a constant sense of presence.
 function ListeningWave({ visible, typing, processing }) {
-  const duration = processing ? "0.45s" : typing ? "0.85s" : "2.6s";
-  const color    = processing ? "#4A5FF7" : typing ? "#818CF8" : "#C7D2FE";
-  // Stagger delays create a left-right wave shape
-  const delays   = ["0s", "0.12s", "0.24s", "0.12s", "0s"];
+  const isActive = processing || typing;
+  const animName  = isActive ? "v2WaveBarActive" : "v2WaveBarIdle";
+  const duration  = processing ? "0.45s" : typing ? "0.85s" : "2.6s";
+  const color     = processing ? "#4A5FF7" : typing ? "#818CF8" : "#C7D2FE";
+  const delays    = ["0s", "0.12s", "0.24s", "0.12s", "0s"];
 
   return (
     <div
       className="v2-wave"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.7s ease" }}
+      style={{
+        opacity: visible ? 1 : 0,
+        // Collapse to zero when hidden — eliminates the 52px blank gap
+        height: visible ? "24px" : "0px",
+        margin: visible ? "14px 0" : "0",
+        overflow: "hidden",
+        transition: "opacity 0.7s ease, height 0.4s ease, margin 0.4s ease",
+      }}
     >
       {delays.map((delay, i) => (
         <div
@@ -39,8 +74,10 @@ function ListeningWave({ visible, typing, processing }) {
           className="v2-wave-bar"
           style={{
             background: color,
+            animationName: animName,
             animationDuration: duration,
             animationDelay: delay,
+            transition: "background 0.5s ease",
           }}
         />
       ))}
@@ -66,7 +103,7 @@ function GeneratingView() {
     <div style={{
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      minHeight: "80vh",
+      flex: 1,
     }}>
       <div style={{
         width: 36, height: 36, marginBottom: 24,
@@ -113,14 +150,11 @@ export default function AppV2() {
     if (narrative.length > 0 && !waveVisible) setWaveVisible(true);
   }, [narrative.length, waveVisible]);
 
-  // Reset wave on re-entry (start fresh / new session)
   useEffect(() => {
-    if (phase === "splash" || phase === "role-capture") {
-      setWaveVisible(false);
-    }
+    if (phase === "splash" || phase === "role-capture") setWaveVisible(false);
   }, [phase]);
 
-  // ── Chip reveal — same timing logic as V1 (4s delay if not yet typed) ────
+  // ── Chip reveal — same 4s delay logic as V1 ──────────────────────────────
   const [chipsRevealed, setChipsRevealed] = useState(false);
   const chipsTimerRef = useRef(null);
   const userHasTypedRef = useRef(false);
@@ -141,8 +175,29 @@ export default function AppV2() {
     if (phase === "entry" && narrative.length > 0) userHasTypedRef.current = true;
   }, [narrative, phase]);
 
-  // ── Dynamic sub-copy — updates locally as narrative grows ─────────────────
-  // In conversing phase, prefer AI-provided subCopy once it's been set.
+  // ── "Conversation starters" label — show on reveal, hide on first chip click
+  const [showChipsLabel, setShowChipsLabel] = useState(false);
+  const prevChipsRevealedRef = useRef(false);
+
+  useEffect(() => {
+    // Show label whenever chips transition from hidden → revealed
+    if (chipsRevealed && !prevChipsRevealedRef.current) {
+      setShowChipsLabel(true);
+    }
+    prevChipsRevealedRef.current = chipsRevealed;
+  }, [chipsRevealed]);
+
+  // Also hide label when phase advances past entry (AI has responded)
+  useEffect(() => {
+    if (phase === "conversing") setShowChipsLabel(false);
+  }, [phase]);
+
+  const handleChipClick = useCallback((chip) => {
+    handleChipAppend(chip);
+    setShowChipsLabel(false);
+  }, [handleChipAppend]);
+
+  // ── Dynamic sub-copy — updates live as narrative grows ────────────────────
   const displayPrompt = useMemo(() => {
     const useAiSubCopy = phase === "conversing" && currentPrompt.subCopy;
     return {
@@ -153,7 +208,7 @@ export default function AppV2() {
     };
   }, [currentPrompt, narrative.length, phase, processing]);
 
-  // ── Normalise chips for bottom bar ────────────────────────────────────────
+  // ── Normalise chips ───────────────────────────────────────────────────────
   const normalizedChips = useMemo(() =>
     (currentPrompt.chips || []).map(c =>
       typeof c === "string" ? { label: c, expandedText: null } : c
@@ -168,51 +223,40 @@ export default function AppV2() {
       {/* ── Splash ─────────────────────────────────────────────────────────── */}
       {phase === "splash" && <SplashScreen onStart={handleDismissSplash} />}
 
-      {/* ── Fixed logo header — visible on all post-splash phases ─────────── */}
+      {/* ── Fixed logo header — all post-splash phases ────────────────────── */}
       {phase !== "splash" && (
         <header className="v2-header">
           <img src="/MV-Logo.svg" alt="Multiverse" style={{ height: 28 }} />
         </header>
       )}
 
-      {/* ── Role capture — centred below header ───────────────────────────── */}
+      {/* ── Role capture — centred in viewport ───────────────────────────── */}
       {phase === "role-capture" && (
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: "100vh", padding: "80px 20px 24px", boxSizing: "border-box",
-        }}>
-          <div style={{ maxWidth: 480, width: "100%" }}>
+        <PhaseWrapper innerPadding="24px 20px">
+          <div style={{ maxWidth: 480, width: "100%", margin: "0 auto" }}>
             <RoleCapture onComplete={handleRoleSubmit} />
           </div>
-        </div>
+        </PhaseWrapper>
       )}
 
-      {/* ── Generating ────────────────────────────────────────────────────── */}
+      {/* ── Generating — centred spinner ──────────────────────────────────── */}
       {phase === "generating" && (
-        <div style={{ paddingTop: 80 }}>
+        <PhaseWrapper>
           <GeneratingView />
-        </div>
+        </PhaseWrapper>
       )}
 
-      {/* ── Results ───────────────────────────────────────────────────────── */}
+      {/* ── Results — centred in viewport ────────────────────────────────── */}
       {phase === "results" && results && (
-        <div style={{ paddingTop: 80 }}>
-          <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 20px 60px" }}>
-            <NarrativePlayback results={results} onReset={reset} />
-          </div>
-        </div>
+        <PhaseWrapper innerPadding="24px 20px">
+          <NarrativePlayback results={results} onReset={reset} />
+        </PhaseWrapper>
       )}
 
       {/* ── Narrative entry / conversing ──────────────────────────────────── */}
       {inNarrativePhase && (
-        <div style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          // Top padding clears fixed header (60px) + breathing room (36px)
-          // Bottom padding clears fixed bottom bar (~96px)
-          padding: "96px 20px 112px",
-          boxSizing: "border-box",
-        }}>
+        // bottomClearance=120 ensures content never scrolls behind the fixed bottom bar
+        <PhaseWrapper bottomClearance={120} innerPadding="24px 20px">
 
           {/* Error banner */}
           {error && (
@@ -226,8 +270,7 @@ export default function AppV2() {
           )}
 
           {/* Guidance prompt — headline + dynamic sub-copy */}
-          {/* Pass processing=false / isUserTyping=false so we suppress
-              GuidancePrompt's built-in indicators — the wave handles those */}
+          {/* processing=false / isUserTyping=false: wave handles those indicators */}
           <GuidancePrompt
             prompt={displayPrompt}
             processing={false}
@@ -235,7 +278,7 @@ export default function AppV2() {
             isUserTyping={false}
           />
 
-          {/* Omnipresent listening wave — bridges prompt and textarea */}
+          {/* Omnipresent listening wave */}
           <ListeningWave
             visible={waveVisible}
             typing={isUserTyping}
@@ -272,47 +315,46 @@ export default function AppV2() {
               <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                 <button onClick={handleRestoreNarrative} style={{
                   background: "#fff", border: "1.5px solid #4A5FF7",
-                  borderRadius: 10, padding: "8px 18px",
-                  fontSize: 13, fontWeight: 500,
-                  fontFamily: "'Google Sans', sans-serif",
-                  color: "#4A5FF7", cursor: "pointer",
+                  borderRadius: 10, padding: "8px 18px", fontSize: 13, fontWeight: 500,
+                  fontFamily: "'Google Sans', sans-serif", color: "#4A5FF7", cursor: "pointer",
                 }}>Restore my text</button>
                 <button onClick={handleStartFresh} style={{
                   background: "#fff", border: "1.5px solid #E5E7EB",
-                  borderRadius: 10, padding: "8px 18px",
-                  fontSize: 13, fontWeight: 500,
-                  fontFamily: "'Google Sans', sans-serif",
-                  color: "#6B7280", cursor: "pointer",
+                  borderRadius: 10, padding: "8px 18px", fontSize: 13, fontWeight: 500,
+                  fontFamily: "'Google Sans', sans-serif", color: "#6B7280", cursor: "pointer",
                 }}>Start fresh</button>
               </div>
             </div>
           )}
-        </div>
+        </PhaseWrapper>
       )}
 
       {/* ── Bottom bar — chips OR CTA, pinned to viewport ─────────────────── */}
       {inNarrativePhase && (
         <div className="v2-bottom-bar">
           {readyForResults ? (
-            /* CTA replaces chips once confidence threshold is hit */
-            <button
-              onClick={handleGenerateResults}
-              className="v2-cta-btn"
-            >
+            <button onClick={handleGenerateResults} className="v2-cta-btn">
               Generate My Friction Report
             </button>
-          ) : (
-            /* Chips — staggered entry animation, same 4s reveal logic as V1 */
-            chipsRevealed && normalizedChips.map((chip, i) => (
-              <button
-                key={`${chip.label}-${i}`}
-                onClick={() => handleChipAppend(chip)}
-                className="v2-chip-btn"
-                style={{ animationDelay: `${i * 0.07}s` }}
-              >
-                {chip.label}
-              </button>
-            ))
+          ) : chipsRevealed && normalizedChips.length > 0 && (
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {/* "Conversation starters" label — fades in with chips, gone after first click */}
+              {showChipsLabel && (
+                <div className="v2-chips-label">Conversation starters</div>
+              )}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                {normalizedChips.map((chip, i) => (
+                  <button
+                    key={`${chip.label}-${i}`}
+                    onClick={() => handleChipClick(chip)}
+                    className="v2-chip-btn"
+                    style={{ animationDelay: `${i * 0.07}s` }}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
