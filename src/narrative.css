@@ -1,0 +1,382 @@
+/* ── V4 Narrative Canvas ─────────────────────────────────────────────── */
+
+/* ── Prompt transitions ── */
+@keyframes narrativePromptEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes narrativePromptExit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.narrative-prompt-enter {
+  animation: narrativePromptEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.narrative-prompt-exit {
+  animation: narrativePromptExit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* ── Chip animations ── */
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: scale(0.97) translateY(2px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.narrative-chips > button {
+  opacity: 0;
+  animation: chipFadeIn 0.25s ease-out forwards;
+}
+
+.narrative-chips > button:nth-child(1) { animation-delay: 0.05s; }
+.narrative-chips > button:nth-child(2) { animation-delay: 0.1s; }
+.narrative-chips > button:nth-child(3) { animation-delay: 0.15s; }
+.narrative-chips > button:nth-child(4) { animation-delay: 0.2s; }
+.narrative-chips > button:nth-child(5) { animation-delay: 0.25s; }
+.narrative-chips > button:nth-child(6) { animation-delay: 0.3s; }
+
+/* ── Chip interactive states ── */
+.narrative-chips > button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 95, 247, 0.15);
+}
+
+.narrative-chips > button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* ── Confidence meter ── */
+.narrative-confidence-fill {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes confidenceReady {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 95, 247, 0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(74, 95, 247, 0); }
+}
+
+.narrative-confidence-ready {
+  animation: confidenceReady 2s ease-in-out infinite;
+}
+
+/* ── Generate button entrance ── */
+@keyframes generateBtnEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.narrative-generate-btn {
+  animation: generateBtnEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Thinking dots ── */
+@keyframes thinkingDot {
+  0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.narrative-thinking-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.narrative-thinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4A5FF7;
+  animation: thinkingDot 1.4s ease-in-out infinite;
+}
+
+.narrative-thinking-dot:nth-child(1) { animation-delay: 0s; }
+.narrative-thinking-dot:nth-child(2) { animation-delay: 0.16s; }
+.narrative-thinking-dot:nth-child(3) { animation-delay: 0.32s; }
+
+/* ── Subtle "listening" bar while user types ── */
+@keyframes listeningPulse {
+  0%   { opacity: 0.3; width: 20%; }
+  50%  { opacity: 0.7; width: 40%; }
+  100% { opacity: 0.3; width: 20%; }
+}
+
+.narrative-listening-indicator {
+  display: flex;
+  justify-content: center;
+  height: 3px;
+}
+
+.narrative-listening-bar {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4A5FF7, transparent);
+  border-radius: 2px;
+  animation: listeningPulse 2s ease-in-out infinite;
+}
+
+/* ── Role capture ── */
+@keyframes roleCaptureEnter {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.role-capture-enter {
+  animation: roleCaptureEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes roleCaptureExit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+
+.role-capture-exit {
+  animation: roleCaptureExit 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* ── Nudge message ── */
+@keyframes nudgeFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.narrative-nudge {
+  text-align: center;
+  font-size: 13px;
+  color: #9CA3AF;
+  font-style: italic;
+  margin-top: 10px;
+  animation: nudgeFadeIn 0.4s ease-out forwards;
+}
+
+/* ── Recovery prompt ── */
+@keyframes recoverySlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.narrative-recovery {
+  animation: recoverySlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Chips header label ── */
+@keyframes chipsHeaderFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.narrative-chips-header {
+  animation: chipsHeaderFadeIn 0.5s ease-out forwards;
+}
+
+/* ── Seniority pills entrance ── */
+@keyframes seniorityPillsEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.seniority-pills-enter {
+  animation: seniorityPillsEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Splash screen entrance ── */
+@keyframes splashFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.splash-fi-hidden {
+  opacity: 0;
+}
+
+.splash-fi {
+  animation: splashFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.splash-fi-1 { animation-delay: 0.1s; opacity: 0; }
+.splash-fi-2 { animation-delay: 0.25s; opacity: 0; }
+.splash-fi-3 { animation-delay: 0.4s; opacity: 0; }
+.splash-fi-4 { animation-delay: 0.55s; opacity: 0; }
+.splash-fi-5 { animation-delay: 0.7s; opacity: 0; }
+
+.splash-screen button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(74, 95, 247, 0.4) !important;
+}
+
+.splash-screen button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Unwrapped card animations ── */
+@keyframes cardFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.uw-card-fi {
+  animation: cardFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.uw-card-fi-1 { animation-delay: 0.05s; opacity: 0; }
+.uw-card-fi-2 { animation-delay: 0.15s; opacity: 0; }
+.uw-card-fi-3 { animation-delay: 0.25s; opacity: 0; }
+.uw-card-fi-4 { animation-delay: 0.35s; opacity: 0; }
+.uw-card-fi-5 { animation-delay: 0.45s; opacity: 0; }
+.uw-card-fi-6 { animation-delay: 0.55s; opacity: 0; }
+
+/* Unwrapped progress dots */
+.uw-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  background: #D1D5DB;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.uw-dot-active {
+  width: 24px;
+  background: #4A5FF7;
+}
+
+/* Unwrapped nav arrow */
+.uw-nav-arrow {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid #E5E7EB;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 18px;
+  color: #374151;
+}
+
+.uw-nav-arrow:hover {
+  border-color: #4A5FF7;
+  color: #4A5FF7;
+  box-shadow: 0 2px 8px rgba(74, 95, 247, 0.15);
+}
+
+.uw-nav-arrow:active {
+  transform: scale(0.95);
+}
+
+/* Unwrapped bar chart */
+.uw-bar {
+  height: 28px;
+  border-radius: 6px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Unwrapped tag chips */
+.uw-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(74, 95, 247, 0.08);
+  color: #4A5FF7;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Google Sans', sans-serif;
+}
+
+/* Unwrapped back arrow */
+.uw-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #E5E7EB;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 16px;
+  color: #6B7280;
+}
+
+.uw-back:hover {
+  border-color: #4A5FF7;
+  color: #4A5FF7;
+}
+
+/* ── Loading spinner ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Loading status messages ── */
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; transform: translateY(4px); }
+  15%, 85% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Results entrance ── */
+@keyframes resultsEnter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.narrative-results-enter {
+  animation: resultsEnter 0.5s ease-out forwards;
+}
+
+/* ── Focus states ── */
+button:focus-visible {
+  outline: 2px solid #4A5FF7;
+  outline-offset: 2px;
+}
+
+textarea:focus-visible {
+  outline: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .narrative-shell {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-bottom: 16px !important;
+  }
+
+  .narrative-prompt-headline {
+    font-size: 20px !important;
+  }
+
+  .narrative-prompt-subcopy {
+    font-size: 13px !important;
+  }
+
+  .narrative-chips > button {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  .narrative-textarea {
+    min-height: 100px !important;
+    max-height: 28vh !important;
+  }
+
+  .narrative-attachment-request {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .narrative-shell {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .narrative-prompt-headline {
+    font-size: 18px !important;
+  }
+}

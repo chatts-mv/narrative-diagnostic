@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Narrative Diagnostic · Multiverse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #FAFAF9; -webkit-font-smoothing: antialiased; }
+      button { font-family: 'Google Sans', sans-serif; }
+      input, select, textarea { font-family: 'Google Sans', sans-serif; }
+      input:focus, select:focus, textarea:focus { outline: none; border-color: #4A5FF7 !important; box-shadow: 0 0 0 3px rgba(74,95,247,0.12); }
+      button:hover { opacity: 0.92; }
+
+      @media print {
+        body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        button, input[type="file"], label[style] { display: none !important; }
+        @page { margin: 1.5cm; size: A4 landscape; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
