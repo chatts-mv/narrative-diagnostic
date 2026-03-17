@@ -270,11 +270,12 @@ export default function AppV2() {
           )}
 
           {/* Guidance prompt — headline + dynamic sub-copy */}
-          {/* processing=false / isUserTyping=false: wave handles those indicators */}
+          {/* isEntry locked to false: keeps font size consistent (22px) throughout.
+              Passing true caused a visible 28→22px shrink on first AI response. */}
           <GuidancePrompt
             prompt={displayPrompt}
             processing={false}
-            isEntry={phase === "entry"}
+            isEntry={false}
             isUserTyping={false}
           />
 
