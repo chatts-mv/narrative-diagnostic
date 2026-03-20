@@ -195,6 +195,10 @@ export default function AppV2() {
   const handleChipClick = useCallback((chip) => {
     handleChipAppend(chip);
     setShowChipsLabel(false);
+    // Trigger wave animation — chip appends text without going through wrappedHandleTextChange
+    setIsUserTyping(true);
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => setIsUserTyping(false), 1500);
   }, [handleChipAppend]);
 
   // ── Dynamic sub-copy — updates live as narrative grows ────────────────────
@@ -286,22 +290,26 @@ export default function AppV2() {
             processing={processing}
           />
 
-          {/* Textarea */}
-          <NarrativeTextarea
-            value={narrative}
-            onChange={wrappedHandleTextChange}
-            attachments={attachments}
-            onAttach={handleAttach}
-            onRemoveAttachment={handleRemoveAttachment}
-            attachmentRequest={currentPrompt.attachmentRequest}
-            processing={processing}
-            turnsCount={turns.length}
-          />
+          {/* Textarea + nudge wrapper — nudge is absolute so it doesn't shift layout */}
+          <div style={{ position: "relative" }}>
+            <NarrativeTextarea
+              value={narrative}
+              onChange={wrappedHandleTextChange}
+              attachments={attachments}
+              onAttach={handleAttach}
+              onRemoveAttachment={handleRemoveAttachment}
+              attachmentRequest={currentPrompt.attachmentRequest}
+              processing={processing}
+              turnsCount={turns.length}
+            />
 
-          {/* Nudge message */}
-          {nudgeMessage && !processing && (
-            <div className="narrative-nudge">{nudgeMessage}</div>
-          )}
+            {/* Nudge message — positioned below textarea without affecting flow */}
+            <div
+              className={`narrative-nudge ${nudgeMessage && !processing ? "narrative-nudge-visible" : ""}`}
+            >
+              {nudgeMessage || "\u00A0"}
+            </div>
+          </div>
 
           {/* Recovery prompt */}
           {showRecovery && (

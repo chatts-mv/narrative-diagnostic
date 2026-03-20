@@ -5,6 +5,7 @@ import {
   buildNarrativeAnalysisPrompt,
   buildAttachmentAnalysisPrompt,
 } from "../lib/narrativePrompts";
+import { getFollowUpChips } from "../lib/roleChips";
 
 /**
  * Theme merge logic: when AI identifies themes from a new turn,
@@ -93,17 +94,12 @@ export default function useNarrativeGuide() {
       };
     } catch (e) {
       console.error("Narrative guide failed:", e);
-      // Return a sensible fallback
       const localThemes = themes.length > 0 ? themes : [];
       return {
         prompt: {
           headline: "That's really helpful. What else frustrates you about your workflow?",
           subCopy: "Think about tools, processes, or communication patterns.",
-          chips: [
-            { label: "Slow tools", expandedText: null },
-            { label: "Too many meetings", expandedText: null },
-            { label: "Manual data entry", expandedText: null },
-          ],
+          chips: getFollowUpChips(),
           attachmentRequest: null,
         },
         themes: localThemes,
