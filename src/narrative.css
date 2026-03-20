@@ -147,7 +147,16 @@
   color: #9CA3AF;
   font-style: italic;
   margin-top: 10px;
-  animation: nudgeFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+
+.narrative-nudge-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* ── Recovery prompt ── */

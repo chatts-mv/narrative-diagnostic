@@ -1,71 +1,21 @@
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import useNarrativeGuide from "./useNarrativeGuide";
-
-// ── Role-aware chip lookup ────────────────────────────────────────────
-
-const ROLE_CHIP_MAP = {
-  design: [
-    { label: "Design review loops", expandedText: "I spend too much time going back and forth on design reviews, with feedback scattered across multiple tools and stakeholders." },
-    { label: "Stakeholder feedback", expandedText: "Getting timely, consolidated feedback from stakeholders is a constant struggle that delays my design work." },
-    { label: "Context switching", expandedText: "I constantly switch between different projects, tools, and conversations throughout the day, losing focus each time." },
-  ],
-  product: [
-    { label: "Roadmap alignment", expandedText: "I spend a lot of time trying to keep everyone aligned on the product roadmap, with priorities shifting constantly." },
-    { label: "Stakeholder updates", expandedText: "A big chunk of my week goes to preparing and delivering status updates for different stakeholder groups." },
-    { label: "Data requests", expandedText: "I frequently need to pull my own data and metrics because our analytics setup doesn't give me what I need quickly." },
-  ],
-  engineer: [
-    { label: "Code reviews", expandedText: "Code reviews take up a surprising amount of my week, with PRs sitting in queue or requiring multiple rounds of back-and-forth." },
-    { label: "Meeting overhead", expandedText: "I lose a lot of productive coding time to meetings that could have been handled asynchronously." },
-    { label: "Context switching", expandedText: "I constantly switch between different codebases, tickets, and conversations, making it hard to get into deep focus." },
-  ],
-  develop: [
-    { label: "Code reviews", expandedText: "Code reviews take up a surprising amount of my week, with PRs sitting in queue or requiring multiple rounds of back-and-forth." },
-    { label: "Meeting overhead", expandedText: "I lose a lot of productive coding time to meetings that could have been handled asynchronously." },
-    { label: "Context switching", expandedText: "I constantly switch between different codebases, tickets, and conversations, making it hard to get into deep focus." },
-  ],
-  data: [
-    { label: "Ad-hoc data requests", expandedText: "I spend a lot of my time fielding one-off data requests from different teams instead of focusing on planned analysis work." },
-    { label: "Manual reporting", expandedText: "I waste hours each week manually pulling, formatting, and distributing reports that could be automated." },
-    { label: "Dashboard maintenance", expandedText: "Keeping dashboards up to date and accurate is a constant drain, especially when data sources or requirements keep changing." },
-  ],
-  sales: [
-    { label: "CRM updates", expandedText: "I spend too much time manually updating our CRM after every call and meeting instead of focusing on selling." },
-    { label: "Pipeline reporting", expandedText: "Putting together pipeline reports for leadership takes up valuable time I could spend with prospects." },
-    { label: "Meeting prep", expandedText: "I spend a disproportionate amount of time researching accounts and preparing for meetings before I can even pick up the phone." },
-  ],
-  market: [
-    { label: "Content approvals", expandedText: "Getting content through the approval chain takes far too long, with multiple stakeholders adding rounds of review." },
-    { label: "Campaign reporting", expandedText: "I spend too much time pulling metrics from different platforms to compile campaign performance reports." },
-    { label: "Cross-team alignment", expandedText: "Coordinating with product, sales, and design teams on messaging and positioning eats into my creative time." },
-  ],
-  default: [
-    { label: "Meetings", expandedText: "I spend a large portion of my week in meetings that could have been emails or async updates." },
-    { label: "Manual reporting", expandedText: "I waste hours each week manually compiling reports and status updates for different audiences." },
-    { label: "Approval bottlenecks", expandedText: "Getting approvals and sign-offs takes far too long, blocking progress on work that should be straightforward." },
-  ],
-};
-
-function getRoleAwareChips(jobTitle) {
-  const lower = (jobTitle || "").toLowerCase();
-  const key = Object.keys(ROLE_CHIP_MAP).find(k => k !== "default" && lower.includes(k)) || "default";
-  return ROLE_CHIP_MAP[key];
-}
+import { getRoleAwareChips } from "../lib/roleChips";
 
 function buildInitialPrompt(userRole) {
   if (!userRole) {
     return {
       headline: "What's the biggest thing that drains your energy at work each week?",
       subCopy: "Describe a specific task or situation.",
-      chips: ROLE_CHIP_MAP.default,
+      chips: getRoleAwareChips("", ""),
       attachmentRequest: null,
     };
   }
-  const { jobTitle } = userRole;
+  const { jobTitle, seniority } = userRole;
   return {
     headline: "What drains your energy most each week?",
     subCopy: "Describe a specific task or situation you keep running into.",
-    chips: getRoleAwareChips(jobTitle),
+    chips: getRoleAwareChips(jobTitle, seniority),
     attachmentRequest: null,
   };
 }
