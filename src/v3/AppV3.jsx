@@ -15,7 +15,7 @@ export default function AppV3() {
 
   const {
     phase, sections, activeSectionIndex,
-    currentPrompt, readyForResults, processing, results, error,
+    currentPrompt, readyForResults, processing, roleSection, results, error,
   } = state;
 
   const handleChipClick = useCallback((chip) => {
@@ -37,6 +37,7 @@ export default function AppV3() {
           onGenerate={handleGenerateResults}
           phase={phase}
           processing={processing}
+          roleSection={roleSection}
         />
       )}
 
