@@ -94,6 +94,7 @@ export default function V3ActiveSection({ section, sectionIndex, prompt, onTextC
         value={section.text}
         onChange={onTextChange}
         autoFocus={sectionIndex > 0}
+        chipAppendedRef={chipAppendedRef}
       />
     </div>
   );
