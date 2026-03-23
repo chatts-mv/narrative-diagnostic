@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import "./v3.css";
 import SplashScreen from "../components/SplashScreen";
+import RoleCapture from "../components/RoleCapture";
 import NarrativePlayback from "../components/NarrativePlayback";
 import V3Canvas from "./components/V3Canvas";
 import V3GeneratingView from "./components/V3GeneratingView";
@@ -9,13 +10,13 @@ import useNarrativeFlowV3 from "./hooks/useNarrativeFlowV3";
 export default function AppV3() {
   const {
     state, handleTextChange, handleChipAppend,
-    handleDismissSplash,
+    handleDismissSplash, handleRoleSubmit,
     handleGenerateResults, reset,
   } = useNarrativeFlowV3();
 
   const {
     phase, sections, activeSectionIndex,
-    currentPrompt, readyForResults, processing, roleSection, results, error,
+    currentPrompt, readyForResults, processing, results, error,
   } = state;
 
   const handleChipClick = useCallback((chip) => {
@@ -25,6 +26,19 @@ export default function AppV3() {
   return (
     <div className="v3-root">
       {phase === "splash" && <SplashScreen onStart={handleDismissSplash} />}
+
+      {phase === "role-capture" && (
+        <div style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#FAF9F6",
+          padding: "24px 20px",
+        }}>
+          <RoleCapture onComplete={handleRoleSubmit} />
+        </div>
+      )}
 
       {phase === "writing" && (
         <V3Canvas
@@ -37,7 +51,6 @@ export default function AppV3() {
           onGenerate={handleGenerateResults}
           phase={phase}
           processing={processing}
-          roleSection={roleSection}
         />
       )}
 

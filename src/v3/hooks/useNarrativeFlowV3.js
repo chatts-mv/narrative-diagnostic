@@ -8,8 +8,6 @@ import { getRoleAwareChips } from "../../lib/roleChips";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
-const SENIORITY_OPTIONS = ["Junior", "Mid-level", "Senior", "Lead", "Manager", "Director+"];
-
 function makeSection(index) {
   return {
     id: `section_${index}`,
@@ -39,42 +37,16 @@ function buildInitialPrompt(userRole) {
   };
 }
 
-const ROLE_PROMPT = {
-  headline: "What's your role?",
-  subCopy: "Type your job title, then pick your seniority level below.",
-  chips: SENIORITY_OPTIONS.map(s => ({ label: s })),
-  attachmentRequest: null,
-};
-
-function parseSeniorityFromText(text) {
-  const lower = text.toLowerCase();
-  for (const opt of SENIORITY_OPTIONS) {
-    if (lower.includes(opt.toLowerCase())) return opt;
-  }
-  return null;
-}
-
-function parseJobTitleFromText(text, seniority) {
-  let title = text;
-  if (seniority) {
-    title = title.replace(new RegExp(seniority + "\\.?", "i"), "").trim();
-  }
-  // Strip trailing punctuation left over from chip append
-  title = title.replace(/[.\s]+$/, "").trim();
-  return title;
-}
-
 // ── Initial state ────────────────────────────────────────────────────
 
 const initialState = {
   phase: "splash",
   userRole: null,
-  roleSection: true,
 
   sections: [makeSection(0)],
   activeSectionIndex: 0,
 
-  currentPrompt: ROLE_PROMPT,
+  currentPrompt: { headline: "", subCopy: "", chips: [], attachmentRequest: null },
   processing: false,
   lastProcessedLength: 0,
   turns: [],
@@ -94,38 +66,25 @@ const initialState = {
 function reducer(state, action) {
   switch (action.type) {
     case "DISMISS_SPLASH":
-      return { ...state, phase: "writing", currentPrompt: ROLE_PROMPT };
+      return { ...state, phase: "role-capture" };
+
+    case "SET_USER_ROLE":
+      return {
+        ...state,
+        userRole: action.userRole,
+        detectedRole: `${action.userRole.seniority} ${action.userRole.jobTitle}`,
+        detectedContext: { seniority: action.userRole.seniority },
+        currentPrompt: action.initialPrompt,
+        phase: "writing",
+        sections: [makeSection(0)],
+        activeSectionIndex: 0,
+      };
 
     case "SET_SECTION_TEXT": {
       const sections = state.sections.map((s, i) =>
         i === state.activeSectionIndex ? { ...s, text: action.text } : s
       );
       return { ...state, sections };
-    }
-
-    case "COMPLETE_ROLE_SECTION": {
-      const { jobTitle, seniority } = action;
-      const userRole = { jobTitle, seniority };
-      const sections = [...state.sections];
-      sections[0] = {
-        ...sections[0],
-        locked: true,
-        summary: `${seniority} ${jobTitle}`,
-        label: "YOUR ROLE",
-      };
-      sections.push(makeSection(1));
-
-      return {
-        ...state,
-        roleSection: false,
-        userRole,
-        detectedRole: `${seniority} ${jobTitle}`,
-        detectedContext: { seniority },
-        sections,
-        activeSectionIndex: 1,
-        lastProcessedLength: 0,
-        currentPrompt: buildInitialPrompt(userRole),
-      };
     }
 
     case "SET_PROCESSING":
@@ -175,7 +134,7 @@ function reducer(state, action) {
         };
       }
 
-      const lockedCount = nextState.sections.filter(s => s.locked && s.label !== "YOUR ROLE").length;
+      const lockedCount = nextState.sections.filter(s => s.locked).length;
       nextState.readyForResults = lockedCount >= 3;
 
       return nextState;
@@ -216,16 +175,20 @@ export default function useNarrativeFlowV3() {
   const { processNarrative, generateResults } = useNarrativeGuideV3();
 
   const debounceTimersRef = useRef([]);
-  const roleTimerRef = useRef(null);
 
   // ── Text change ──
   const handleTextChange = useCallback((text) => {
     dispatch({ type: "SET_SECTION_TEXT", text });
   }, []);
 
-  // ── Splash ──
+  // ── Splash / role ──
   const handleDismissSplash = useCallback(() => {
     dispatch({ type: "DISMISS_SPLASH" });
+  }, []);
+
+  const handleRoleSubmit = useCallback((userRole) => {
+    const initialPrompt = buildInitialPrompt(userRole);
+    dispatch({ type: "SET_USER_ROLE", userRole, initialPrompt });
   }, []);
 
   // ── Chip append ──
@@ -241,33 +204,13 @@ export default function useNarrativeFlowV3() {
     dispatch({ type: "SET_SECTION_TEXT", text: activeSection.text + connector + textToAppend });
   }, []);
 
-  // ── Role section auto-complete ──
-  useEffect(() => {
-    clearTimeout(roleTimerRef.current);
-    const s = stateRef.current;
-    if (!s.roleSection || s.phase !== "writing") return;
-
-    const text = s.sections[s.activeSectionIndex]?.text || "";
-    const seniority = parseSeniorityFromText(text);
-    if (!seniority) return;
-
-    const jobTitle = parseJobTitleFromText(text, seniority);
-    if (jobTitle.length < 2) return;
-
-    roleTimerRef.current = setTimeout(() => {
-      dispatch({ type: "COMPLETE_ROLE_SECTION", jobTitle, seniority });
-    }, 800);
-
-    return () => clearTimeout(roleTimerRef.current);
-  }, [state.sections, state.activeSectionIndex]);
-
   // ── Tiered debounced auto-process ──
   useEffect(() => {
     debounceTimersRef.current.forEach(id => clearTimeout(id));
     debounceTimersRef.current = [];
 
     const s = stateRef.current;
-    if (s.phase !== "writing" || s.roleSection) return;
+    if (s.phase !== "writing") return;
 
     const activeSection = s.sections[s.activeSectionIndex];
     if (!activeSection || activeSection.locked) return;
@@ -290,7 +233,7 @@ export default function useNarrativeFlowV3() {
           dispatch({ type: "RECORD_TURN", text: newText });
 
           const completedSections = s2.sections
-            .filter(s => s.locked && s.label !== "YOUR ROLE")
+            .filter(s => s.locked)
             .map(s => ({ label: s.label, summary: s.summary }));
 
           try {
@@ -340,11 +283,7 @@ export default function useNarrativeFlowV3() {
 
     try {
       const s = stateRef.current;
-      const fullNarrative = s.sections
-        .filter(sec => sec.label !== "YOUR ROLE")
-        .map(sec => sec.text)
-        .filter(Boolean)
-        .join("\n\n");
+      const fullNarrative = s.sections.map(sec => sec.text).filter(Boolean).join("\n\n");
       const results = await generateResults(
         fullNarrative,
         s.themes,
@@ -366,7 +305,6 @@ export default function useNarrativeFlowV3() {
   const reset = useCallback(() => {
     debounceTimersRef.current.forEach(id => clearTimeout(id));
     debounceTimersRef.current = [];
-    clearTimeout(roleTimerRef.current);
     dispatch({ type: "RESET" });
   }, []);
 
@@ -375,6 +313,7 @@ export default function useNarrativeFlowV3() {
     handleTextChange,
     handleChipAppend,
     handleDismissSplash,
+    handleRoleSubmit,
     handleGenerateResults,
     reset,
   };

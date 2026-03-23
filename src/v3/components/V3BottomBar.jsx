@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 export default function V3BottomBar({
   chips, readyForResults, onChipClick, onGenerate,
-  phase, hasUserTyped, roleSection,
+  phase, hasUserTyped,
 }) {
   const [chipsRevealed, setChipsRevealed] = useState(false);
   const [showLabel, setShowLabel] = useState(false);
@@ -50,7 +50,7 @@ export default function V3BottomBar({
         </button>
       ) : chipsRevealed && normalizedChips.length > 0 && (
         <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          {showLabel && !roleSection && (
+          {showLabel && (
             <div className="v3-chips-label">Conversation starters</div>
           )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>

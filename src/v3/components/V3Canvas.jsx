@@ -8,9 +8,10 @@ import V3BottomBar from "./V3BottomBar";
 export default function V3Canvas({
   sections, activeSectionIndex, currentPrompt,
   readyForResults, onTextChange, onChipClick,
-  onGenerate, phase, processing, roleSection,
+  onGenerate, phase, processing,
 }) {
   const prevActiveRef = useRef(activeSectionIndex);
+  const chipAppendedRef = useRef(false);
 
   // Auto-scroll to new section when activeSectionIndex changes
   useEffect(() => {
@@ -31,6 +32,11 @@ export default function V3Canvas({
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, []);
+
+  const wrappedChipClick = useCallback((chip) => {
+    chipAppendedRef.current = true;
+    onChipClick(chip);
+  }, [onChipClick]);
 
   const activeSection = sections[activeSectionIndex];
   const hasUserTyped = activeSection ? activeSection.text.length > 0 : false;
@@ -60,6 +66,7 @@ export default function V3Canvas({
             prompt={currentPrompt}
             onTextChange={onTextChange}
             processing={processing}
+            chipAppendedRef={chipAppendedRef}
           />
         )}
       </div>
@@ -67,11 +74,10 @@ export default function V3Canvas({
       <V3BottomBar
         chips={currentPrompt.chips}
         readyForResults={readyForResults}
-        onChipClick={onChipClick}
+        onChipClick={wrappedChipClick}
         onGenerate={onGenerate}
         phase={phase}
         hasUserTyped={hasUserTyped}
-        roleSection={roleSection}
       />
     </>
   );

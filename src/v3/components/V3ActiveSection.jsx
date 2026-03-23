@@ -7,7 +7,7 @@ const TYPING_IDLE_MS = 1200;
 const IDLE_NUDGE_MS = 4000;
 const INITIAL_IDLE_MS = 5000;
 
-export default function V3ActiveSection({ section, sectionIndex, prompt, onTextChange, processing }) {
+export default function V3ActiveSection({ section, sectionIndex, prompt, onTextChange, processing, chipAppendedRef }) {
   const isFirstSection = sectionIndex === 0;
   const [hasUserTyped, setHasUserTyped] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -16,6 +16,7 @@ export default function V3ActiveSection({ section, sectionIndex, prompt, onTextC
   const idleTimer = useRef(null);
   const initialIdleTimer = useRef(null);
   const prevTextLen = useRef(section.text.length);
+  const prevProcessing = useRef(false);
 
   useEffect(() => {
     if (section.text.length > 0 && !hasUserTyped) {
@@ -42,11 +43,18 @@ export default function V3ActiveSection({ section, sectionIndex, prompt, onTextC
 
   useEffect(() => {
     if (section.text.length !== prevTextLen.current && section.text.length > 0) {
+      const wasChip = chipAppendedRef?.current;
+      if (chipAppendedRef) chipAppendedRef.current = false;
+
       clearTimeout(initialIdleTimer.current);
-      setIsTyping(true);
-      setIsIdle(false);
       clearTimeout(typingTimer.current);
       clearTimeout(idleTimer.current);
+
+      if (!wasChip) {
+        setIsTyping(true);
+        setIsIdle(false);
+      }
+
       typingTimer.current = setTimeout(() => {
         setIsTyping(false);
         idleTimer.current = setTimeout(() => setIsIdle(true), IDLE_NUDGE_MS);
@@ -61,10 +69,15 @@ export default function V3ActiveSection({ section, sectionIndex, prompt, onTextC
 
   useEffect(() => {
     if (processing) {
+      setIsTyping(false);
       setIsIdle(false);
+      clearTimeout(typingTimer.current);
       clearTimeout(idleTimer.current);
       clearTimeout(initialIdleTimer.current);
+    } else if (prevProcessing.current) {
+      idleTimer.current = setTimeout(() => setIsIdle(true), IDLE_NUDGE_MS);
     }
+    prevProcessing.current = processing;
   }, [processing]);
 
   const isHero = isFirstSection && !hasUserTyped;
