@@ -49,6 +49,7 @@ const initialState = {
   currentPrompt: { headline: "", subCopy: "", chips: [], attachmentRequest: null },
   processing: false,
   lastProcessedLength: 0,
+  sectionTurnCount: 0,
   turns: [],
   themes: [],
   confidence: 0,
@@ -95,6 +96,7 @@ function reducer(state, action) {
         ...state,
         turns: [...state.turns, { userText: action.text, timestamp: Date.now() }],
         lastProcessedLength: state.sections[state.activeSectionIndex].text.length,
+        sectionTurnCount: state.sectionTurnCount + 1,
       };
 
     case "SET_PROMPT":
@@ -110,17 +112,21 @@ function reducer(state, action) {
         processing: false,
       };
 
-      if (
-        action.sectionComplete &&
-        action.sectionSummary &&
-        state.sections[state.activeSectionIndex].text.length >= 40
-      ) {
+      const activeText = state.sections[state.activeSectionIndex].text;
+      const aiWantsComplete = action.sectionComplete && action.sectionSummary && activeText.length >= 40;
+      const forceComplete = !aiWantsComplete && state.sectionTurnCount >= 4 && activeText.length >= 80;
+
+      if (aiWantsComplete || forceComplete) {
         const sections = [...nextState.sections];
         sections[state.activeSectionIndex] = {
           ...sections[state.activeSectionIndex],
           locked: true,
-          summary: action.sectionSummary,
-          label: action.sectionLabel || `SECTION ${state.activeSectionIndex + 1}`,
+          summary: aiWantsComplete
+            ? action.sectionSummary
+            : activeText.slice(0, 60).replace(/\s+\S*$/, "") + "...",
+          label: (aiWantsComplete && action.sectionLabel)
+            ? action.sectionLabel
+            : `FRICTION POINT`,
           themes: (action.themes || []).map(t => t.name),
         };
         const newIndex = sections.length;
@@ -131,6 +137,7 @@ function reducer(state, action) {
           sections,
           activeSectionIndex: newIndex,
           lastProcessedLength: 0,
+          sectionTurnCount: 0,
         };
       }
 
@@ -245,6 +252,7 @@ export default function useNarrativeFlowV3() {
               s2.detectedContext,
               s2.activeSectionIndex,
               completedSections,
+              s2.sectionTurnCount + 1,
             );
 
             dispatch({ type: "SET_PROMPT", prompt: result.prompt });

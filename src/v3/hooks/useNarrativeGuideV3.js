@@ -47,12 +47,12 @@ export default function useNarrativeGuideV3() {
 
   const processNarrative = useCallback(async (
     newText, turns, themes, detectedRole, detectedContext,
-    currentSectionIndex, completedSections
+    currentSectionIndex, completedSections, sectionTurnCount
   ) => {
     try {
       const { system, user } = buildNarrativeGuidePromptV3(
         newText, turns, themes, detectedRole, detectedContext,
-        currentSectionIndex, completedSections
+        currentSectionIndex, completedSections, sectionTurnCount
       );
 
       const rawResult = await claude(system, user, 800);

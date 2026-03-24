@@ -8,7 +8,7 @@ export { buildNarrativeAnalysisPrompt, buildAttachmentAnalysisPrompt } from "../
 
 export function buildNarrativeGuidePromptV3(
   newText, turns, themes, detectedRole, detectedContext,
-  currentSectionIndex, completedSections
+  currentSectionIndex, completedSections, sectionTurnCount = 0
 ) {
   const sectionHistory = completedSections.length > 0
     ? completedSections.map((s, i) =>
@@ -35,16 +35,16 @@ SECTION-BASED EXPLORATION:
 The narrative unfolds across sections, each exploring a friction theme in depth.
 - Guide the user to explore one friction area per section.
 - A section is "complete" when the user has described a friction theme with sufficient depth: TRIGGER + CONTEXT + at least one of FRICTION/IMPACT/WORKAROUNDS.
-- Do NOT complete a section too early — wait for at least 2-3 exchanges on the same theme before marking complete.
+- Do NOT complete a section too early — wait for at least 2 exchanges on the same theme before marking complete.
 - When a section is complete, set sectionComplete: true.
 - Provide sectionLabel: a short evocative uppercase label (2-4 words) that captures the essence of what was described. Examples: "THE DAILY DRAIN", "THE RIPPLE EFFECT", "THE MEETING TRAP", "THE HANDOFF GAP".
 - Provide sectionSummary: a single sentence (10-20 words) in second person summarising the completed section. Example: "Your Mondays disappear into status meetings that rarely lead to decisions."
 - After completing a section, pivot your next headline to explore a NEW friction area.
 
 SECTION PACING:
-- Aim for 2-4 sections total before readyForResults.
-- Each section should involve 2-4 user turns minimum.
-- readyForResults should only be true when at least 2 sections are complete AND confidence >= 75.
+- Aim for 3-4 sections total before readyForResults.
+- Each section should involve 2-3 user turns minimum.
+- readyForResults should only be true when at least 3 sections are complete AND confidence >= 75.
 
 RULES:
 - Ask ONE focused follow-up question based on what they just wrote
@@ -87,11 +87,16 @@ For "attachmentRequest": only include this when contextually relevant, not every
     ? turns.map((t, i) => `[Turn ${i + 1}]: "${t.userText}"`).join("\n")
     : "(first message)";
 
+  const urgencyHint = sectionTurnCount >= 3
+    ? `\nSECTION URGENCY: This section has had ${sectionTurnCount} turns. You should complete it now if the user has described a clear friction point with any context. Do not wait for perfect depth.\n`
+    : "";
+
   const user = `COMPLETED SECTIONS:
 ${sectionHistory}
 
 CURRENT SECTION INDEX: ${currentSectionIndex + 1}
-
+SECTION TURN COUNT: ${sectionTurnCount}
+${urgencyHint}
 CONVERSATION SO FAR:
 ${turnHistory}
 
